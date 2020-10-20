@@ -81,6 +81,7 @@ class Simple_Jwt_Authentication_Rest {
 			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'generate_token' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 
@@ -90,6 +91,7 @@ class Simple_Jwt_Authentication_Rest {
 			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'validate_token' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 
@@ -99,6 +101,7 @@ class Simple_Jwt_Authentication_Rest {
 			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'refresh_token' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 
@@ -108,6 +111,7 @@ class Simple_Jwt_Authentication_Rest {
 			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'revoke_token' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 
@@ -117,6 +121,7 @@ class Simple_Jwt_Authentication_Rest {
 			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'reset_password' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 	}
@@ -544,106 +549,6 @@ class Simple_Jwt_Authentication_Rest {
 			),
 		);
 
-	}
-
-
-	/**
-	 * Endpoint for requesting a password reset link.
-	 * This is a slightly modified version of what WP core uses.
-	 *
-	 * @param object $request The request object that come in from WP Rest API.
-	 * @since 1.0
-	 */
-	public function reset_password( $request ) {
-		$username = $request->get_param( 'username' );
-		if ( ! $username ) {
-			return array(
-				'code'    => 'jwt_auth_invalid_username',
-				'message' => __( '<strong>Error:</strong> Username or email not specified.', 'simple-jwt-authentication' ),
-				'data'    => array(
-					'status' => 403,
-				),
-			);
-		} elseif ( strpos( $username, '@' ) ) {
-			$user_data = get_user_by( 'email', trim( $username ) );
-		} else {
-			$user_data = get_user_by( 'login', trim( $username ) );
-		}
-
-		global $wpdb, $current_site;
-
-		do_action( 'lostpassword_post' );
-		if ( ! $user_data ) {
-			return array(
-				'code'    => 'jwt_auth_invalid_username',
-				'message' => __( '<strong>Error:</strong> Invalid username.', 'simple-jwt-authentication' ),
-				'data'    => array(
-					'status' => 403,
-				),
-			);
-		}
-
-		// redefining user_login ensures we return the right case in the email
-		$user_login = $user_data->user_login;
-		$user_email = $user_data->user_email;
-
-		do_action( 'retreive_password', $user_login );  // Misspelled and deprecated
-		do_action( 'retrieve_password', $user_login );
-
-		$allow = apply_filters( 'allow_password_reset', true, $user_data->ID );
-
-		if ( ! $allow ) {
-			return array(
-				'code'    => 'jwt_auth_reset_password_not_allowed',
-				'message' => __( '<strong>Error:</strong> Resetting password is not allowed.', 'simple-jwt-authentication' ),
-				'data'    => array(
-					'status' => 403,
-				),
-			);
-		} elseif ( is_wp_error( $allow ) ) {
-			return array(
-				'code'    => 'jwt_auth_reset_password_not_allowed',
-				'message' => __( '<strong>Error:</strong> Resetting password is not allowed.', 'simple-jwt-authentication' ),
-				'data'    => array(
-					'status' => 403,
-				),
-			);
-		}
-
-		$key = get_password_reset_key( $user_data );
-
-		$message  = __( 'Someone requested that the password be reset for the following account:' ) . "\r\n\r\n";
-		$message .= network_home_url( '/' ) . "\r\n\r\n";
-		// translators: %s is the users login name.
-		$message .= sprintf( __( 'Username: %s' ), $user_login ) . "\r\n\r\n";
-		$message .= __( 'If this was a mistake, just ignore this email and nothing will happen.' ) . "\r\n\r\n";
-		$message .= __( 'To reset your password, visit the following address:' ) . "\r\n\r\n";
-		$message .= '<' . network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ), 'login' ) . ">\r\n";
-
-		if ( is_multisite() ) {
-			$blogname = $GLOBALS['current_site']->site_name;
-		} else {
-			// The blogname option is escaped with esc_html on the way into the database in sanitize_option
-			// we want to reverse this for the plain text arena of emails.
-			$blogname = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		}
-		// translators: %s is the sites name (blogname)
-		$title = sprintf( __( '[%s] Password Reset' ), $blogname );
-
-		$title   = apply_filters( 'retrieve_password_title', $title );
-		$message = apply_filters( 'retrieve_password_message', $message, $key );
-
-		if ( $message && ! wp_mail( $user_email, $title, $message ) ) {
-			wp_die( __( 'The e-mail could not be sent.' ) . "<br />\n" . __( 'Possible reason: your host may have disabled the mail() function...' ) ); // phpcs:ignore
-		}
-
-		return array(
-			'code'    => 'jwt_auth_password_reset',
-			'message' => __( '<strong>Success:</strong> an email for selecting a new password has been sent.', 'simple-jwt-authentication' ),
-			'data'    => array(
-				'status' => 200,
-			),
-		);
 	}
 
 	/**

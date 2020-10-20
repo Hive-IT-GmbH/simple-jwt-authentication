@@ -1,10 +1,10 @@
 === Simple JWT Authentication ===
-Contributors: jonathan-dejong
+Contributors: jonathan-dejong,janthiel
 Donate link: http://fancy.to/scbk86
 Tags: wp-rest, api, jwt, authentication, access
-Requires at least: 3.0.1
-Tested up to: 4.8
-Stable tag: 1.4.0
+Requires at least: 5.0
+Tested up to: 5.5
+Stable tag: 1.5.0
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -21,6 +21,10 @@ Easily extends the WP REST API using JSON Web Tokens Authentication as an authen
 3. Go to the settings page under Settings > Simple JWT Authentication to setup the plugin.
 
 == Changelog ==
+
+= 1.5 =
+* Fixes missing permission_callback
+
 = 1.4 =
 * Security fix - Not showing the secret key in WP admin if set as a constant. Thank you [JanThiel](https://github.com/JanThiel) for making me aware of this.
 * Added the user data to the expire filter to allow for user specific expire times.
